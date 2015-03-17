@@ -1,0 +1,4 @@
+<?jelly escape-by-default='true'?>
+<div>
+  This plugin post quality gate checks from Sonar builds into a Slack channel.
+</div>
