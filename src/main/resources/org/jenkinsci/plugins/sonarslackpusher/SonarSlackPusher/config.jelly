@@ -9,7 +9,4 @@
     <f:entry title="Sonar job name" field="jobName">
         <f:textbox />
     </f:entry>
-    <f:entry title="Branch name" field="branch">
-        <f:textbox />
-    </f:entry>
 </j:jelly>

@@ -5,44 +5,32 @@ import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
-import hudson.tasks.*;
+import hudson.tasks.BuildStepDescriptor;
+import hudson.tasks.BuildStepMonitor;
+import hudson.tasks.Notifier;
+import hudson.tasks.Publisher;
 import org.apache.http.HttpEntity;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.config.Registry;
-import org.apache.http.config.RegistryBuilder;
-import org.apache.http.conn.HttpClientConnectionManager;
-import org.apache.http.conn.socket.ConnectionSocketFactory;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.conn.BasicHttpClientConnectionManager;
-import org.apache.http.ssl.TrustStrategy;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
-import org.apache.http.ssl.SSLContexts;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-import javax.net.ssl.SSLContext;
 import java.io.PrintStream;
-import java.net.URL;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
 public class SonarSlackPusher extends Notifier {
 
     private String hook;
-    private String sonarUrl = "http://sonar.videoplaza.org:9000";
+    private String sonarUrl;
     private String jobName;
 
     private PrintStream logger = null;
@@ -55,7 +43,7 @@ public class SonarSlackPusher extends Notifier {
     @DataBoundConstructor
     public SonarSlackPusher(String hook, String sonarUrl, String jobName) {
         this.hook = hook;
-        this.sonarUrl = sonarUrl;
+        this.sonarUrl = sonarUrl.endsWith("/") ? sonarUrl.substring(0, sonarUrl.length()-1) : sonarUrl;
         this.jobName = jobName;
     }
 
@@ -133,8 +121,9 @@ public class SonarSlackPusher extends Notifier {
     }
 
     public void pushNotification() throws Exception {
+        String linkUrl = new URI(sonarUrl+"/dashboard/index/"+id).normalize().toString();
         String message =
-                "{\"text\":\"<"+sonarUrl+"/dashboard/index/"+id+"|*Sonar job*>\\n"+
+                "{\"text\":\"<"+linkUrl+"|*Sonar job*>\\n"+
                 "*Job:* "+jobName;
         if (branch!=null) {
             message += "\\n*Branch:* "+branch;
@@ -152,8 +141,6 @@ public class SonarSlackPusher extends Notifier {
         post.addHeader("Content-Type", "application/json");
         post.setEntity(entity);
         HttpClient client = HttpClientBuilder.create().build();
-
-        System.out.println("Url: "+post.getURI());
         HttpResponse res = client.execute(post);
         if (res.getStatusLine().getStatusCode() != 200) {
             logger.println("[ssp] could not push to slack...");
