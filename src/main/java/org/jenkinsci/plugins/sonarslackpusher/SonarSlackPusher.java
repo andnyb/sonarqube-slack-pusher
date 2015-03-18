@@ -109,7 +109,7 @@ public class SonarSlackPusher extends Notifier {
         JSONParser jsonParser = new JSONParser();
         JSONArray jobs = (JSONArray)jsonParser.parse(data);
         for (Object job : jobs) {
-            if (((JSONObject)job).get("name").toString().equalsIgnoreCase(jobName)) {
+            if (((JSONObject)job).get("name").toString().equals(jobName)) {
                 id = ((JSONObject)job).get("id").toString();
                 if (((JSONObject)job).get("branch")!=null) {
                     branch = ((JSONObject)job).get("branch").toString();
@@ -147,22 +147,16 @@ public class SonarSlackPusher extends Notifier {
             }
         }
         message += "]}";
-        //message += "\"}";
-        System.out.println("MSG: "+message);
         HttpPost post = new HttpPost(hook);
         HttpEntity entity = new StringEntity(message, "UTF-8");
         post.addHeader("Content-Type", "application/json");
         post.setEntity(entity);
         HttpClient client = HttpClientBuilder.create().build();
 
-        //System.out.println("Body: "+post.getEntity().getContent());
         System.out.println("Url: "+post.getURI());
         HttpResponse res = client.execute(post);
         if (res.getStatusLine().getStatusCode() != 200) {
-            //logger.println("[ssp] could not push to slack...");
-            System.out.println(res.getStatusLine().getStatusCode());
-            System.out.println(res.getStatusLine().getReasonPhrase());
-            System.out.println(res.getEntity().getContent());
+            logger.println("[ssp] could not push to slack...");
         }
     }
 }
