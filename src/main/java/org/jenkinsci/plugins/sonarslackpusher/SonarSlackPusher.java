@@ -36,9 +36,9 @@ public class SonarSlackPusher extends Notifier {
     private PrintStream logger = null;
 
     // Notification contents
-    public String branch = null;
-    public String id;
-    public List<Attachment> attachments = new ArrayList<Attachment>();
+    private String branch = null;
+    private String id;
+    private List<Attachment> attachments = new ArrayList<Attachment>();
 
     @DataBoundConstructor
     public SonarSlackPusher(String hook, String sonarUrl, String jobName) {
@@ -93,7 +93,7 @@ public class SonarSlackPusher extends Notifier {
         }
     }
 
-    public void getAllNotifications(String data) throws Exception {
+    private void getAllNotifications(String data) throws Exception {
         JSONParser jsonParser = new JSONParser();
         JSONArray jobs = (JSONArray)jsonParser.parse(data);
         for (Object job : jobs) {
@@ -120,7 +120,7 @@ public class SonarSlackPusher extends Notifier {
         }
     }
 
-    public void pushNotification() throws Exception {
+    private void pushNotification() throws Exception {
         String linkUrl = new URI(sonarUrl+"/dashboard/index/"+id).normalize().toString();
         String message =
                 "{\"text\":\"<"+linkUrl+"|*Sonar job*>\\n"+
