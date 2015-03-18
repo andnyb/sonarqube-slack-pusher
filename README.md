@@ -1,7 +1,7 @@
 # sonar-slack-pusher
 Jenkins plugin for pushing Sonar quality gate statuses to a given Slack channel.
 
-The plugin runs as a post build action and runs no matter the outcome of the job. The Sonar jobs needs to have a quality gate defined and liked to the project against whom the job is evaluated against.
+The plugin runs as a post build action and runs no matter the outcome of the job. The Sonar jobs need to have a quality gate defined and liked to the project against whom the job is evaluated against.
 
 ### Configuration
 
