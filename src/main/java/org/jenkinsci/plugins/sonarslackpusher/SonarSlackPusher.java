@@ -9,6 +9,7 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
+import hudson.util.FormValidation;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -20,18 +21,29 @@ import org.apache.http.util.EntityUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 
+import javax.servlet.ServletException;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Notifies a configured Slack channel of Sonar quality gate checks
+ * through the Sonar API.
+ */
 public class SonarSlackPusher extends Notifier {
 
-    private String hook;
-    private String sonarUrl;
-    private String jobName;
+    private final String hook;
+    private final String sonarUrl;
+    private final String jobName;
+    private final String branchName;
 
     private PrintStream logger = null;
 
@@ -41,10 +53,28 @@ public class SonarSlackPusher extends Notifier {
     private List<Attachment> attachments = new ArrayList<Attachment>();
 
     @DataBoundConstructor
-    public SonarSlackPusher(String hook, String sonarUrl, String jobName) {
-        this.hook = hook;
-        this.sonarUrl = sonarUrl.endsWith("/") ? sonarUrl.substring(0, sonarUrl.length()-1) : sonarUrl;
-        this.jobName = jobName;
+    public SonarSlackPusher(String hook, String sonarUrl, String jobName, String branchName) {
+        this.hook = hook.trim();
+        String url = sonarUrl.trim();
+        this.sonarUrl = url.endsWith("/") ? url.substring(0, url.length()-1) : url;
+        this.jobName = jobName.trim();
+        this.branchName = branchName.trim();
+    }
+
+    public String getHook() {
+        return hook;
+    }
+
+    public String getSonarUrl() {
+        return sonarUrl;
+    }
+
+    public String getJobName() {
+        return jobName;
+    }
+
+    public String getBranchName() {
+        return branchName;
     }
 
     @Override
@@ -52,15 +82,19 @@ public class SonarSlackPusher extends Notifier {
         logger = listener.getLogger();
         try {
             getAllNotifications(getSonarData());
-            pushNotification();
         } catch (Exception e) {
-            logger.println("[ssp] we have issues "+e.getMessage());
+            return false;
         }
+        pushNotification();
         return true;
     }
 
     @Extension
     public static class DescriptorImpl extends BuildStepDescriptor<Publisher> {
+
+        public DescriptorImpl() {
+            load();
+        }
 
         @Override
         public String getDisplayName() {
@@ -70,6 +104,47 @@ public class SonarSlackPusher extends Notifier {
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> jobType) {
             return true;
+        }
+
+        public FormValidation doCheckHook(@QueryParameter String value)
+                throws IOException, ServletException {
+            String url = value;
+            if ((url == null) || url.equals("")) {
+                return FormValidation.error("Please specify a valid URL");
+            }
+            else {
+                try {
+                    new URL(url);
+                    return FormValidation.ok();
+                } catch (Exception e) {
+                    return FormValidation.error("Please specify a valid URL.");
+                }
+            }
+        }
+
+        public FormValidation doCheckSonarUrl(@QueryParameter String value)
+                throws IOException, ServletException {
+            String url = value;
+            if ((url == null) || url.equals("")) {
+                return FormValidation.error("Please specify a valid URL");
+            }
+            else {
+                try {
+                    new URL(url);
+                    return FormValidation.ok();
+                } catch (Exception e) {
+                    return FormValidation.error("Please specify a valid URL.");
+                }
+            }
+        }
+
+        public FormValidation doCheckJobName(@QueryParameter String value)
+                throws IOException, ServletException {
+            String name = value;
+            if ((name == null) || name.equals("")) {
+                return FormValidation.error("Please enter a Sonar job name.");
+            }
+            return FormValidation.ok();
         }
     }
 
@@ -84,20 +159,29 @@ public class SonarSlackPusher extends Notifier {
         try {
             res = client.execute(get);
             if (res.getStatusLine().getStatusCode() != 200) {
-                logger.println("[ssp] could not get Sonar results...");
+                logger.println("[ssp] got a non 200 response from Sonar at URL: '"+sonarUrl + "/api/resources?metrics=qi-quality-index,coverage,test_success_density,blocker_violations,critical_violations&includealerts=true'");
             }
             return EntityUtils.toString(res.getEntity());
         } catch (Exception e) {
-            logger.println("[ssp] could not get Sonar results...");
+            logger.println("[ssp] could not get Sonar results, exception: '"+e.getMessage()+"'");
             throw e;
         }
     }
 
-    private void getAllNotifications(String data) throws Exception {
+    private void getAllNotifications(String data) {
         JSONParser jsonParser = new JSONParser();
-        JSONArray jobs = (JSONArray)jsonParser.parse(data);
+        JSONArray jobs = null;
+        try {
+             jobs = (JSONArray) jsonParser.parse(data);
+        } catch (ParseException pe) {
+            logger.println("[ssp] could not parse the response from Sonar '"+data+"'");
+        }
         for (Object job : jobs) {
-            if (((JSONObject)job).get("name").toString().equals(jobName)) {
+            String name = jobName;
+            if (branchName != null && !branchName.equals("")) {
+                name += " "+branchName;
+            }
+            if (((JSONObject)job).get("name").toString().equals(name)) {
                 id = ((JSONObject)job).get("id").toString();
                 if (((JSONObject)job).get("branch")!=null) {
                     branch = ((JSONObject)job).get("branch").toString();
@@ -120,8 +204,13 @@ public class SonarSlackPusher extends Notifier {
         }
     }
 
-    private void pushNotification() throws Exception {
-        String linkUrl = new URI(sonarUrl+"/dashboard/index/"+id).normalize().toString();
+    private void pushNotification() {
+        String linkUrl = null;
+        try {
+            linkUrl = new URI(sonarUrl + "/dashboard/index/" + id).normalize().toString();
+        } catch (URISyntaxException use) {
+            logger.println("[ssp] could not create link to Sonar job with the following content'"+sonarUrl + "/dashboard/index/" + id+"'");
+        }
         String message =
                 "{\"text\":\"<"+linkUrl+"|*Sonar job*>\\n"+
                 "*Job:* "+jobName;
@@ -141,10 +230,13 @@ public class SonarSlackPusher extends Notifier {
         post.addHeader("Content-Type", "application/json");
         post.setEntity(entity);
         HttpClient client = HttpClientBuilder.create().build();
-        HttpResponse res = client.execute(post);
-        if (res.getStatusLine().getStatusCode() != 200) {
-            logger.println("[ssp] could not push to slack...");
+        try {
+            HttpResponse res = client.execute(post);
+            if (res.getStatusLine().getStatusCode() != 200) {
+                logger.println("[ssp] could not push to Slack... got a non 200 response.");
+            }
+        } catch (IOException ioe) {
+            logger.println("[ssp] could not push to slack... got an exception: '"+ioe.getMessage()+"'");
         }
     }
 }
-

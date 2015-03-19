@@ -1,12 +1,17 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-    <f:entry title="Slack hook" field="hook">
-        <f:textbox />
-    </f:entry>
-    <f:entry title="Sonar root URL" field="sonarUrl">
-        <f:textbox />
-    </f:entry>
-    <f:entry title="Sonar job name" field="jobName">
-        <f:textbox />
-    </f:entry>
+    <f:advanced>
+        <f:entry title="Slack hook" field="hook">
+            <f:textbox />
+        </f:entry>
+        <f:entry title="Sonar root URL" field="sonarUrl">
+            <f:textbox />
+        </f:entry>
+        <f:entry title="Sonar job name" field="jobName">
+            <f:textbox />
+        </f:entry>
+        <f:entry title="Branch name" field="branchName">
+            <f:textbox />
+        </f:entry>
+    </f:advanced>
 </j:jelly>
