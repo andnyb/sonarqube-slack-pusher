@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.sonarslackpusher;
 
+import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
@@ -10,6 +11,7 @@ import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import hudson.util.FormValidation;
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -33,6 +35,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Notifies a configured Slack channel of Sonar quality gate checks
@@ -43,7 +46,7 @@ public class SonarSlackPusher extends Notifier {
     private final String hook;
     private final String sonarUrl;
     private final String jobName;
-    private final String branchName;
+    private String branchName;
 
     private PrintStream logger = null;
 
@@ -80,6 +83,10 @@ public class SonarSlackPusher extends Notifier {
     @Override
     public boolean perform(AbstractBuild<?, ?> build,Launcher launcher,BuildListener listener) {
         logger = listener.getLogger();
+
+        logger.print("$branch: '"+branchName+"'"); // Remove
+        branchName = parameterReplacement(branchName, build, listener);
+        logger.print("updated: '"+branchName+"'"); // Remove
         try {
             getAllNotifications(getSonarData());
         } catch (Exception e) {
@@ -87,6 +94,42 @@ public class SonarSlackPusher extends Notifier {
         }
         pushNotification();
         return true;
+    }
+
+    private String parameterReplacement(String str, AbstractBuild<?, ?> build, BuildListener listener) {
+        try {
+            EnvVars env = build.getEnvironment(listener);
+            env.overrideAll(build.getBuildVariables());
+            ArrayList<String> params = getParams(str);
+            for (String param : params) {
+                if (build.getBuildVariables().containsKey(param)) {
+                    str = str.replaceAll(java.util.regex.Pattern.quote("${"+param+"}"), build.getBuildVariables().get(param));
+                }
+            }
+        }
+        catch (InterruptedException ie) {}
+        catch (IOException ioe) {}
+        finally {
+            return str;
+        }
+    }
+
+    private ArrayList<String> getParams(String str) {
+        ArrayList<String> params = new ArrayList<String>();
+        final String start = java.util.regex.Pattern.quote("${");
+        final String end = "}";
+
+        String [] rawParams = str.split(start);
+        for (int i=1; i<rawParams.length; i++) {
+            if (rawParams[i].contains(end)) {
+                String[] raw = rawParams[i].split(java.util.regex.Pattern.quote(end));
+                if (raw.length>0) {
+                    System.out.println("Adding: " + raw[0]);
+                    params.add(raw[0]);
+                }
+            }
+        }
+        return params;
     }
 
     @Extension

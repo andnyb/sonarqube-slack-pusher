@@ -13,7 +13,7 @@ public class Attachment {
     }
 
     public void setAlert(String alert) {
-        this.alert = alert;
+        this.alert = alert.equalsIgnoreCase("ERROR") ? "DANGER" : "WARNING";
         this.color = alert.equalsIgnoreCase("ERROR") ? "danger" : "warning";
     }
 
