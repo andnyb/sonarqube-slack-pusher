@@ -83,10 +83,7 @@ public class SonarSlackPusher extends Notifier {
     @Override
     public boolean perform(AbstractBuild<?, ?> build,Launcher launcher,BuildListener listener) {
         logger = listener.getLogger();
-
-        logger.print("$branch: '"+branchName+"'"); // Remove
         branchName = parameterReplacement(branchName, build, listener);
-        logger.print("updated: '"+branchName+"'"); // Remove
         try {
             getAllNotifications(getSonarData());
         } catch (Exception e) {
