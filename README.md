@@ -8,11 +8,17 @@ linked to the project all the check given checks will be reported back if they '
 For a failed code coverage check it looks like this:
 
 **Sonar job**
+
 **Job:** _My project_
+
 **Branch:** _master_
+
 **DANGER**
+
 **Quality gate:** _coverage_
+
 **Reason:** _Coverage < 60_
+
 **Value:** _29.0%_
 
 
