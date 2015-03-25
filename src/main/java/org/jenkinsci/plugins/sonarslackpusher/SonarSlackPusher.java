@@ -43,9 +43,9 @@ import java.util.Map;
  */
 public class SonarSlackPusher extends Notifier {
 
-    private final String hook;
-    private final String sonarUrl;
-    private final String jobName;
+    private String hook;
+    private String sonarUrl;
+    private String jobName;
     private String branchName;
 
     private PrintStream logger = null;
@@ -268,6 +268,7 @@ public class SonarSlackPusher extends Notifier {
                 message += ",";
             }
         }
+        attachments.clear(); // Or it will keep the last results...
         message += "]}";
         HttpPost post = new HttpPost(hook);
         HttpEntity entity = new StringEntity(message, "UTF-8");
