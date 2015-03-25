@@ -245,6 +245,10 @@ public class SonarSlackPusher extends Notifier {
     }
 
     private void pushNotification() {
+        if (attachments.size()==0) {
+            logger.println("[ssp] no failed quality checks for project '" + jobName + " " + branch + "' nothing to report to the Slack channel.");
+            return;
+        }
         String linkUrl = null;
         try {
             linkUrl = new URI(sonarUrl + "/dashboard/index/" + id).normalize().toString();
@@ -270,6 +274,7 @@ public class SonarSlackPusher extends Notifier {
         post.addHeader("Content-Type", "application/json");
         post.setEntity(entity);
         HttpClient client = HttpClientBuilder.create().build();
+        logger.println("[ssp] pushing with "+attachments.size()+" notification(s) to the Slack channel.");
         try {
             HttpResponse res = client.execute(post);
             if (res.getStatusLine().getStatusCode() != 200) {
