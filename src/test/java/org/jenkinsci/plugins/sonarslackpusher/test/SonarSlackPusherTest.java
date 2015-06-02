@@ -33,7 +33,7 @@ public class SonarSlackPusherTest {
 
     @Test
     public void testReplaceWithParameters() throws Exception {
-        SonarSlackPusher ssp = new SonarSlackPusher("", "", "http://sonar.company.org:9000", "");
+        SonarSlackPusher ssp = new SonarSlackPusher("", "", "http://sonar.company.org:9000", "", "");
         Method replace = ssp.getClass().getDeclaredMethod("getParams", String.class);
         replace.setAccessible(true);
 

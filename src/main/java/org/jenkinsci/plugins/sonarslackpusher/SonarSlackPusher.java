@@ -57,7 +57,7 @@ public class SonarSlackPusher extends Notifier {
     private List<Attachment> attachments = new ArrayList<Attachment>();
 
     @DataBoundConstructor
-    public SonarSlackPusher(String hook, String sonarUrl, String jobName, String branchName) {
+    public SonarSlackPusher(String hook, String sonarUrl, String jobName, String branchName, String additionalChannel) {
         this.hook = hook.trim();
         String url = sonarUrl.trim();
         this.sonarUrl = url.endsWith("/") ? url.substring(0, url.length()-1) : url;
