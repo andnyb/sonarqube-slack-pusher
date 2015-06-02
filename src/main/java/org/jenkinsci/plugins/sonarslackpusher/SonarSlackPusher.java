@@ -261,9 +261,9 @@ public class SonarSlackPusher extends Notifier {
         } catch (URISyntaxException use) {
             logger.println("[ssp] could not create link to Sonar job with the following content'"+sonarUrl + "/dashboard/index/" + id+"'");
         }
-        String message = "{ \"username\": \"Sonar Slack Pusher\"";
+        String message = "{ \"username\": \"Sonar Slack Pusher\",";
         if (additionalChannel != null) {
-           message += "";
+           message += "\"channel\":\""+additionalChannel+"\",";
         }
         message += "\"text\":\"<"+linkUrl+"|*Sonar job*>\\n"+
                 "*Job:* "+jobName;
