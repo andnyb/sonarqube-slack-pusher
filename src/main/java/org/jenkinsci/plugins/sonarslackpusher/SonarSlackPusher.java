@@ -261,10 +261,11 @@ public class SonarSlackPusher extends Notifier {
         } catch (URISyntaxException use) {
             logger.println("[ssp] could not create link to Sonar job with the following content'"+sonarUrl + "/dashboard/index/" + id+"'");
         }
-        String message = "{ \"username\": \"Sonar Slack Pusher\",";
+        String message = "{";
         if (additionalChannel != null) {
            message += "\"channel\":\""+additionalChannel+"\",";
         }
+        message += "\"username\":\"Sonar Slack Pusher\",";
         message += "\"text\":\"<"+linkUrl+"|*Sonar job*>\\n"+
                 "*Job:* "+jobName;
         if (branch!=null) {
@@ -288,7 +289,7 @@ public class SonarSlackPusher extends Notifier {
         try {
             HttpResponse res = client.execute(post);
             if (res.getStatusLine().getStatusCode() != 200) {
-                logger.println("[ssp] could not push to Slack... got a non 200 response.");
+                logger.println("[ssp] could not push to Slack... got a non 200 response. Post body: '"+message+"'");
             }
         } catch (IOException ioe) {
             logger.println("[ssp] could not push to slack... got an exception: '"+ioe.getMessage()+"'");
