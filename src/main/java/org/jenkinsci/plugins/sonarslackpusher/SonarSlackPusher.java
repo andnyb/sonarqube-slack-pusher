@@ -47,6 +47,7 @@ public class SonarSlackPusher extends Notifier {
     private String sonarUrl;
     private String jobName;
     private String branchName;
+    private String additionalChannel;
 
     private PrintStream logger = null;
 
@@ -56,12 +57,13 @@ public class SonarSlackPusher extends Notifier {
     private List<Attachment> attachments = new ArrayList<Attachment>();
 
     @DataBoundConstructor
-    public SonarSlackPusher(String hook, String sonarUrl, String jobName, String branchName) {
+    public SonarSlackPusher(String hook, String sonarUrl, String jobName, String branchName, String additionalChannel) {
         this.hook = hook.trim();
         String url = sonarUrl.trim();
         this.sonarUrl = url.endsWith("/") ? url.substring(0, url.length()-1) : url;
         this.jobName = jobName.trim();
         this.branchName = branchName.trim();
+        this.additionalChannel = additionalChannel.trim();
     }
 
     public String getHook() {
@@ -79,6 +81,10 @@ public class SonarSlackPusher extends Notifier {
     public String getBranchName() {
         return branchName;
     }
+
+    public String getAdditionalChannel() {
+      return additionalChannel;
+   }
 
     @Override
     public boolean perform(AbstractBuild<?, ?> build,Launcher launcher,BuildListener listener) {
@@ -255,8 +261,12 @@ public class SonarSlackPusher extends Notifier {
         } catch (URISyntaxException use) {
             logger.println("[ssp] could not create link to Sonar job with the following content'"+sonarUrl + "/dashboard/index/" + id+"'");
         }
-        String message =
-                "{\"text\":\"<"+linkUrl+"|*Sonar job*>\\n"+
+        String message = "{";
+        if (additionalChannel != null) {
+           message += "\"channel\":\""+additionalChannel+"\",";
+        }
+        message += "\"username\":\"Sonar Slack Pusher\",";
+        message += "\"text\":\"<"+linkUrl+"|*Sonar job*>\\n"+
                 "*Job:* "+jobName;
         if (branch!=null) {
             message += "\\n*Branch:* "+branch;
@@ -279,7 +289,7 @@ public class SonarSlackPusher extends Notifier {
         try {
             HttpResponse res = client.execute(post);
             if (res.getStatusLine().getStatusCode() != 200) {
-                logger.println("[ssp] could not push to Slack... got a non 200 response.");
+                logger.println("[ssp] could not push to Slack... got a non 200 response. Post body: '"+message+"'");
             }
         } catch (IOException ioe) {
             logger.println("[ssp] could not push to slack... got an exception: '"+ioe.getMessage()+"'");

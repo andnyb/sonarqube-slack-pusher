@@ -4,6 +4,9 @@
         <f:entry title="Slack hook" field="hook">
             <f:textbox />
         </f:entry>
+        <f:entry title="Additional channel" field="additionalChannel">
+            <f:textbox />
+        </f:entry>
         <f:entry title="Sonar root URL" field="sonarUrl">
             <f:textbox />
         </f:entry>
