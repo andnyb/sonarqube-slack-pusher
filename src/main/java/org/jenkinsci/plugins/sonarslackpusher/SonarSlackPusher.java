@@ -251,7 +251,8 @@ public class SonarSlackPusher extends Notifier {
     }
 
     private void pushNotification() {
-        if (attachments.size()==0) {
+        Integer numberOfAttachments = attachments.size();
+        if (numberOfAttachments==0) {
             logger.println("[ssp] no failed quality checks for project '" + jobName + " " + branch + "' nothing to report to the Slack channel.");
             return;
         }
@@ -272,9 +273,9 @@ public class SonarSlackPusher extends Notifier {
             message += "\\n*Branch:* "+branch;
         }
         message += "\",\"attachments\":[";
-        for (int i=0; i<attachments.size(); i++) {
+        for (int i=0; i<numberOfAttachments; i++) {
             message += attachments.get(i).getAttachment();
-            if (i<(attachments.size()-1)) {
+            if (i<(numberOfAttachments-1)) {
                 message += ",";
             }
         }
@@ -285,7 +286,7 @@ public class SonarSlackPusher extends Notifier {
         post.addHeader("Content-Type", "application/json");
         post.setEntity(entity);
         HttpClient client = HttpClientBuilder.create().build();
-        logger.println("[ssp] pushing with "+attachments.size()+" notification(s) to the Slack channel.");
+        logger.println("[ssp] pushing with "+numberOfAttachments+" notification(s) to the Slack channel.");
         try {
             HttpResponse res = client.execute(post);
             if (res.getStatusLine().getStatusCode() != 200) {
