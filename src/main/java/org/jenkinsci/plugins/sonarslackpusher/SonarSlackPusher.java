@@ -202,7 +202,7 @@ public class SonarSlackPusher extends Notifier {
       HttpClient client = HttpClientBuilder.create().build();
       HttpResponse res;
       try {
-         logger.println("[ssp] calling SonarQube on: " + sonarUrl + "/api/resources?metrics=alert_status,quality_gate_details&includealerts=true");
+         //logger.println("[ssp] calling SonarQube on: " + sonarUrl + "/api/resources?metrics=alert_status,quality_gate_details&includealerts=true");
          res = client.execute(get);
          if (res.getStatusLine().getStatusCode() != 200) {
             logger.println("[ssp] got a non 200 response from Sonar at URL: '" + sonarUrl + "/api/resources?metrics=qi-quality-index,coverage,test_success_density,blocker_violations,critical_violations&includealerts=true'");
