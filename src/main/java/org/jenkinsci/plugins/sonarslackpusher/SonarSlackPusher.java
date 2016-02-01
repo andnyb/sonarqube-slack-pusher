@@ -44,6 +44,7 @@ public class SonarSlackPusher extends Notifier {
    private String sonarUrl;
    private String jobName;
    private String branchName;
+   private String resolvedBranchName;
    private String additionalChannel;
 
    private PrintStream logger = null;
@@ -88,7 +89,7 @@ public class SonarSlackPusher extends Notifier {
       // Clean up
       attachment = null;
       logger = listener.getLogger();
-      branchName = parameterReplacement(branchName, build, listener);
+      resolvedBranchName = parameterReplacement(branchName, build, listener);
       try {
          getAllNotifications(getSonarData());
       } catch (Exception e) {
@@ -104,8 +105,10 @@ public class SonarSlackPusher extends Notifier {
          env.overrideAll(build.getBuildVariables());
          ArrayList<String> params = getParams(str);
          for (String param : params) {
-            if (build.getBuildVariables().containsKey(param)) {
-               str = str.replaceAll(java.util.regex.Pattern.quote("${" + param + "}"), build.getBuildVariables().get(param));
+            if (env.containsKey(param)) {
+               str = env.get(param);
+            } else if (build.getBuildVariables().containsKey(param)) {
+               str = build.getBuildVariables().get(param);
             }
          }
       } catch (InterruptedException ie) {
@@ -221,8 +224,8 @@ public class SonarSlackPusher extends Notifier {
       }
       for (Object job : jobs) {
          String name = jobName;
-         if (branchName != null && !branchName.equals("")) {
-            name += " " + branchName;
+         if (resolvedBranchName != null && !resolvedBranchName.equals("")) {
+            name += " " + resolvedBranchName;
          }
          if (((JSONObject) job).get("name").toString().equals(name)) {
             id = ((JSONObject) job).get("id").toString();
