@@ -1,6 +1,6 @@
 # sonar-slack-pusher
 
-[![Build Status](https://travis-ci.org/andnyb/sonar-slack-pusher.svg)](https://travis-ci.org/andnyb/soanr-slack-pusher)
+[![Build Status](https://travis-ci.org/andnyb/sonar-slack-pusher.svg)](https://travis-ci.org/andnyb/sonar-slack-pusher)
 
 Jenkins plugin for pushing Sonar quality gate statuses to a given Slack channel.
 
@@ -18,12 +18,10 @@ For a failed code coverage check it looks like this:
 
 **DANGER**
 
-**Quality gate:** _coverage_
-
-**Reason:** _Coverage < 60_
-
-**Value:** _29.0%_
-
+**Reason:**
+- _Coverage < 60_
+- _Skipped unit tests > 0_
+- _<another failed gate>_
 
 ### Configuration
 
@@ -34,13 +32,3 @@ Additional channel|The default channel can be overridden by entering a given cha
 Sonar root URL|This is the root of the remote Sonar installation. The URL is the base for the metrics query and linkage to jobs.|sonar.mycompany.com:9000
 Sonar job name|The name the project has in Sonar. Case sensitive||'super-awesome-service'
 Branch name|The name the project has in Sonar is usually post-pended with a branch name e.g. '<job name> <branch'. Set the branch name to find the correct job. Case sensitive.|'super-awesome-service bugfixBranch'
-
-### Supported metrics
-
-The following metrics are supported in the notification.
-
-* qi-quality-index
-* coverage
-* test_success_density
-* blocker_violations
-* critical_violations
