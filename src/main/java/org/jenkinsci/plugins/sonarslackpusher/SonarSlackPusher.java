@@ -11,7 +11,6 @@ import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import hudson.util.FormValidation;
-import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -35,7 +34,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Notifies a configured Slack channel of Sonar quality gate checks
@@ -48,6 +46,7 @@ public class SonarSlackPusher extends Notifier {
     private String jobName;
     private String branchName;
     private String additionalChannel;
+    private String tempBranchName;
 
     private PrintStream logger = null;
 
@@ -89,7 +88,7 @@ public class SonarSlackPusher extends Notifier {
     @Override
     public boolean perform(AbstractBuild<?, ?> build,Launcher launcher,BuildListener listener) {
         logger = listener.getLogger();
-        branchName = parameterReplacement(branchName, build, listener);
+       tempBranchName = parameterReplacement(branchName, build, listener);
         try {
             getAllNotifications(getSonarData());
         } catch (Exception e) {
@@ -105,8 +104,10 @@ public class SonarSlackPusher extends Notifier {
             env.overrideAll(build.getBuildVariables());
             ArrayList<String> params = getParams(str);
             for (String param : params) {
-                if (build.getBuildVariables().containsKey(param)) {
-                    str = str.replaceAll(java.util.regex.Pattern.quote("${"+param+"}"), build.getBuildVariables().get(param));
+                if (env.containsKey(param)) {
+                    str = env.get(param);
+                }else if (build.getBuildVariables().containsKey(param)) {
+                    str = build.getBuildVariables().get(param);
                 }
             }
         }
@@ -224,8 +225,8 @@ public class SonarSlackPusher extends Notifier {
         }
         for (Object job : jobs) {
             String name = jobName;
-            if (branchName != null && !branchName.equals("")) {
-                name += " "+branchName;
+            if (tempBranchName != null && !tempBranchName.equals("")) {
+                name += " "+tempBranchName;
             }
             if (((JSONObject)job).get("name").toString().equals(name)) {
                 id = ((JSONObject)job).get("id").toString();
