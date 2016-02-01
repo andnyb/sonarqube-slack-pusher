@@ -2,30 +2,24 @@ package org.jenkinsci.plugins.sonarslackpusher;
 
 public class Attachment {
 
-    private String alert;
-    private String color;
-    private String reason;
-    private String rule;
-    private String value;
+   private String alert;
+   private String color;
+   private String alertText;
 
-    public String getAttachment() {
-        return "{\"text\":\"*"+alert+"*\\n*Quality gate:* "+rule+"\\n*Reason:* "+reason+"\\n*Value:* "+value+"\",\"color\":\""+color+"\",\"mrkdwn_in\": [\"text\"]}";
-    }
+   public String getAttachment() {
+      return "{\"text\":\"*" + alert
+         + "*\\n*Reason:*\\n" + alertText
+         + "\",\"color\":\"" + color
+         + "\",\"mrkdwn_in\": [\"text\"]}";
+   }
 
-    public void setAlert(String alert) {
-        this.alert = alert.equalsIgnoreCase("ERROR") ? "DANGER" : "WARNING";
-        this.color = alert.equalsIgnoreCase("ERROR") ? "danger" : "warning";
-    }
+   public void setAlert(String alert) {
+      this.alert = alert.equalsIgnoreCase("ERROR") ? "DANGER" : "WARNING";
+      this.color = alert.equalsIgnoreCase("ERROR") ? "danger" : "warning";
+   }
 
-    public void setReason(String reason) {
-        this.reason = reason;
-    }
-
-    public void setRule(String rule) {
-        this.rule = rule;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
-    }
+   public void setAlertText(String alertText) {
+      String alerts = alertText.replaceAll(",", "\\\\n-");
+      this.alertText = "- " + alerts;
+   }
 }
