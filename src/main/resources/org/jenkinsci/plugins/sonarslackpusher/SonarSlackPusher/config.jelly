@@ -16,5 +16,11 @@
         <f:entry title="Branch name" field="branchName">
             <f:textbox />
         </f:entry>
+        <f:entry title="Username" field="username">
+            <f:textbox />
+        </f:entry>
+        <f:entry title="Password" field="password">
+            <f:password />
+        </f:entry>
     </f:advanced>
 </j:jelly>

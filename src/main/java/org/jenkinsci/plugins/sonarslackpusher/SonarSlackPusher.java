@@ -11,12 +11,15 @@ import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import hudson.util.FormValidation;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.json.simple.JSONArray;
@@ -46,6 +49,8 @@ public class SonarSlackPusher extends Notifier {
    private String branchName;
    private String resolvedBranchName;
    private String additionalChannel;
+   private String username;
+   private String password;
 
    private PrintStream logger = null;
 
@@ -55,13 +60,15 @@ public class SonarSlackPusher extends Notifier {
    private Attachment attachment = null;
 
    @DataBoundConstructor
-   public SonarSlackPusher(String hook, String sonarUrl, String jobName, String branchName, String additionalChannel) {
+   public SonarSlackPusher(String hook, String sonarUrl, String jobName, String branchName, String additionalChannel, String username, String password) {
       this.hook = hook.trim();
       String url = sonarUrl.trim();
       this.sonarUrl = url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
       this.jobName = jobName.trim();
       this.branchName = branchName.trim();
       this.additionalChannel = additionalChannel.trim();
+      this.username = username;
+      this.password = password;
    }
 
    public String getHook() {
@@ -82,6 +89,14 @@ public class SonarSlackPusher extends Notifier {
 
    public String getAdditionalChannel() {
       return additionalChannel;
+   }
+
+   public String getUsername() {
+      return username;
+   }
+
+   public String getPassword() {
+      return password;
    }
 
    @Override
@@ -109,6 +124,8 @@ public class SonarSlackPusher extends Notifier {
                str = env.get(param);
             } else if (build.getBuildVariables().containsKey(param)) {
                str = build.getBuildVariables().get(param);
+            } else {
+               str = null;
             }
          }
       } catch (InterruptedException ie) {
@@ -128,7 +145,6 @@ public class SonarSlackPusher extends Notifier {
          if (rawParams[i].contains(end)) {
             String[] raw = rawParams[i].split(java.util.regex.Pattern.quote(end));
             if (raw.length > 0) {
-               System.out.println("Adding: " + raw[0]);
                params.add(raw[0]);
             }
          }
@@ -198,19 +214,30 @@ public class SonarSlackPusher extends Notifier {
    }
 
    private String getSonarData() throws Exception {
-      HttpGet get = new HttpGet(sonarUrl + "/api/resources?metrics=alert_status,quality_gate_details&includealerts=true");
-      HttpClient client = HttpClientBuilder.create().build();
-      HttpResponse res;
+      String path = "/api/resources?metrics=alert_status,quality_gate_details&includealerts=true";
+      CloseableHttpClient client = HttpClientBuilder.create().build();
+      HttpGet get = new HttpGet(sonarUrl + path);
+
+      if (username != null || !username.isEmpty()) {
+         String encoding = new Base64().encodeAsString(new String(username + ":" + password).getBytes());
+         get.setHeader("Authorization", "Basic " + encoding);
+      }
+
+      CloseableHttpResponse res;
       try {
-         //logger.println("[ssp] calling SonarQube on: " + sonarUrl + "/api/resources?metrics=alert_status,quality_gate_details&includealerts=true");
+         logger.println("[ssp] Calling SonarQube on: " + sonarUrl + path);
          res = client.execute(get);
          if (res.getStatusLine().getStatusCode() != 200) {
-            logger.println("[ssp] got a non 200 response from Sonar at URL: '" + sonarUrl + "/api/resources?metrics=qi-quality-index,coverage,test_success_density,blocker_violations,critical_violations&includealerts=true'");
+            logger.println("[ssp] Got a non 200 response from SonarQube. Server responded with '"+res.getStatusLine().getStatusCode()+" : "+res.getStatusLine
+               ().getReasonPhrase()+"'");
+            throw new Exception();
          }
          return EntityUtils.toString(res.getEntity());
       } catch (Exception e) {
-         logger.println("[ssp] could not get Sonar results, exception: '" + e.getMessage() + "'");
+         logger.println("[ssp] Could not get Sonar results, exception: '" + e.getMessage() + "'");
          throw e;
+      } finally {
+         client.close();
       }
    }
 
@@ -220,13 +247,15 @@ public class SonarSlackPusher extends Notifier {
       try {
          jobs = (JSONArray) jsonParser.parse(data);
       } catch (ParseException pe) {
-         logger.println("[ssp] could not parse the response from Sonar '" + data + "'");
+         logger.println("[ssp] Could not parse the response from Sonar '" + data + "'");
       }
+      String name = jobName;
+      if (resolvedBranchName != null && !resolvedBranchName.equals("")) {
+         name += " " + resolvedBranchName;
+         name.trim();
+      }
+
       for (Object job : jobs) {
-         String name = jobName;
-         if (resolvedBranchName != null && !resolvedBranchName.equals("")) {
-            name += " " + resolvedBranchName;
-         }
          if (((JSONObject) job).get("name").toString().equals(name)) {
             id = ((JSONObject) job).get("id").toString();
             if (((JSONObject) job).get("branch") != null) {
@@ -251,14 +280,20 @@ public class SonarSlackPusher extends Notifier {
 
    private void pushNotification() {
       if (attachment == null) {
-         logger.println("[ssp] no failed quality checks for project '" + jobName + " " + branch + "' nothing to report to the Slack channel.");
+         String msg = "[ssp] No failed quality checks found for project '" + jobName;
+
+         if (resolvedBranchName != null) {
+            msg += " " + resolvedBranchName;
+         }
+         msg += "' nothing to report to the Slack channel.";
+         logger.println(msg);
          return;
       }
       String linkUrl = null;
       try {
          linkUrl = new URI(sonarUrl + "/dashboard/index/" + id).normalize().toString();
       } catch (URISyntaxException use) {
-         logger.println("[ssp] could not create link to Sonar job with the following content'" + sonarUrl + "/dashboard/index/" + id + "'");
+         logger.println("[ssp] Could not create link to Sonar job with the following content'" + sonarUrl + "/dashboard/index/" + id + "'");
       }
       String message = "{";
       if (additionalChannel != null) {
@@ -278,14 +313,14 @@ public class SonarSlackPusher extends Notifier {
       post.addHeader("Content-Type", "application/json");
       post.setEntity(entity);
       HttpClient client = HttpClientBuilder.create().build();
-      logger.println("[ssp] pushing notification(s) to the Slack channel.");
+      logger.println("[ssp] Pushing notification(s) to the Slack channel.");
       try {
          HttpResponse res = client.execute(post);
          if (res.getStatusLine().getStatusCode() != 200) {
-            logger.println("[ssp] could not push to Slack... got a non 200 response. Post body: '" + message + "'");
+            logger.println("[ssp] Could not push to Slack... got a non 200 response. Post body: '" + message + "'");
          }
       } catch (IOException ioe) {
-         logger.println("[ssp] could not push to slack... got an exception: '" + ioe.getMessage() + "'");
+         logger.println("[ssp] Could not push to slack... got an exception: '" + ioe.getMessage() + "'");
       }
    }
 }
