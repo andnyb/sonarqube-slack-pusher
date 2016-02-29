@@ -214,7 +214,7 @@ public class SonarSlackPusher extends Notifier {
    }
 
    private String getSonarData() throws Exception {
-      String path = "/api/resources?metrics=alert_status,quality_gate_details&includealerts=true"; // Use this one
+      String path = "/api/resources?metrics=alert_status,quality_gate_details&includealerts=true";
       CloseableHttpClient client = HttpClientBuilder.create().build();
       HttpGet get = new HttpGet(sonarUrl + path);
 
