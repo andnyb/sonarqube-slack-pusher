@@ -46,27 +46,28 @@ public class SonarSlackPusher extends Notifier {
    private String hook;
    private String sonarUrl;
    private String jobName;
+   private String resolvedJobName; // Needed to avoid getting overwritten when reloading job configuration
    private String branchName;
-   private String resolvedBranchName;
-   private String additionalChannel;
+   private String resolvedBranchName; // Needed to avoid getting overwritten when reloading job configuration
+   private String otherChannel;
+   private String resolvedChannel; // Needed to avoid getting overwritten when reloading job configuration
    private String username;
    private String password;
 
    private PrintStream logger = null;
 
    // Notification contents
-   private String branch = null;
    private String id;
    private Attachment attachment = null;
 
    @DataBoundConstructor
-   public SonarSlackPusher(String hook, String sonarUrl, String jobName, String branchName, String additionalChannel, String username, String password) {
+   public SonarSlackPusher(String hook, String sonarUrl, String jobName, String branchName, String otherChannel, String username, String password) {
       this.hook = hook.trim();
       String url = sonarUrl.trim();
       this.sonarUrl = url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
       this.jobName = jobName.trim();
       this.branchName = branchName.trim();
-      this.additionalChannel = additionalChannel.trim();
+      this.otherChannel = otherChannel.trim();
       this.username = username;
       this.password = password;
    }
@@ -87,8 +88,8 @@ public class SonarSlackPusher extends Notifier {
       return branchName;
    }
 
-   public String getAdditionalChannel() {
-      return additionalChannel;
+   public String getOtherChannel() {
+      return otherChannel;
    }
 
    public String getUsername() {
@@ -104,7 +105,9 @@ public class SonarSlackPusher extends Notifier {
       // Clean up
       attachment = null;
       logger = listener.getLogger();
+      resolvedJobName = parameterReplacement(jobName, build, listener);
       resolvedBranchName = parameterReplacement(branchName, build, listener);
+      resolvedChannel =  parameterReplacement(otherChannel, build, listener);
       try {
          getAllNotifications(getSonarData());
       } catch (Exception e) {
@@ -245,22 +248,16 @@ public class SonarSlackPusher extends Notifier {
       JSONParser jsonParser = new JSONParser();
       JSONArray jobs = null;
       try {
-         jobs = (JSONArray) jsonParser.parse(data);
+         jobs = (JSONArray)jsonParser.parse(data);
       } catch (ParseException pe) {
          logger.println("[ssp] Could not parse the response from Sonar '" + data + "'");
-      }
-      String name = jobName;
-      if (resolvedBranchName != null && !resolvedBranchName.equals("")) {
-         name += " " + resolvedBranchName;
-         name.trim();
+         return;
       }
 
+      String name = resolveJobName();
       for (Object job : jobs) {
          if (((JSONObject) job).get("name").toString().equals(name)) {
             id = ((JSONObject) job).get("id").toString();
-            if (((JSONObject) job).get("branch") != null) {
-               branch = ((JSONObject) job).get("branch").toString();
-            }
             JSONArray msrs = (JSONArray) ((JSONObject) job).get("msr");
             for (Object msr : msrs) {
                if (((JSONObject) msr).get("key").equals("alert_status")) {
@@ -278,16 +275,37 @@ public class SonarSlackPusher extends Notifier {
       }
    }
 
-   private void pushNotification() {
-      if (attachment == null) {
-         String msg = "[ssp] No failed quality checks found for project '" + jobName;
+   private String resolveJobName() {
+      String name = jobName;
+      if (resolvedJobName != null && !resolvedJobName.equals("")) {
+         name = resolvedJobName;
+      }
+      if (resolvedBranchName != null && !resolvedBranchName.equals("")) {
+         name += " " + resolvedBranchName;
+         name.trim();
+      }
+      else if (branchName != null && !branchName.equals("")) {
+         name += " " + branchName;
+         name.trim();
+      }
+      return name;
+   }
 
-         if (resolvedBranchName != null) {
-            msg += " " + resolvedBranchName;
-         }
-         msg += "' nothing to report to the Slack channel.";
+   private String getResolvedChannel() {
+      if (resolvedChannel == null || resolvedChannel.equals("")) {
+         return "default";
+      } else {
+         return resolvedChannel;
+      }
+   }
+
+   private String pushNotificationContent() {
+      if (attachment == null) {
+         String msg = "[ssp] No failed quality checks found for project '";
+         msg += resolveJobName();
+         msg += "' nothing to report to the '"+getResolvedChannel()+"' Slack channel.";
          logger.println(msg);
-         return;
+         return null;
       }
       String linkUrl = null;
       try {
@@ -296,24 +314,32 @@ public class SonarSlackPusher extends Notifier {
          logger.println("[ssp] Could not create link to Sonar job with the following content'" + sonarUrl + "/dashboard/index/" + id + "'");
       }
       String message = "{";
-      if (additionalChannel != null) {
-         message += "\"channel\":\"" + additionalChannel + "\",";
+      if (resolvedChannel != null) {
+         message += "\"channel\":\"" + resolvedChannel + "\",";
       }
       message += "\"username\":\"Sonar Slack Pusher\",";
       message += "\"text\":\"<" + linkUrl + "|*Sonar job*>\\n" +
-         "*Job:* " + jobName;
-      if (branch != null) {
-         message += "\\n*Branch:* " + branch;
+         "*Job:* " + resolvedJobName;
+      if (resolvedBranchName != null) {
+         message += "\\n*Branch:* " + resolvedBranchName;
       }
       message += "\",\"attachments\":[";
       message += attachment.getAttachment();
       message += "]}";
+      return message;
+   }
+
+   private void pushNotification() {
+      String message = pushNotificationContent();
+      if (message == null) {
+         return;
+      }
       HttpPost post = new HttpPost(hook);
       HttpEntity entity = new StringEntity(message, "UTF-8");
       post.addHeader("Content-Type", "application/json");
       post.setEntity(entity);
       HttpClient client = HttpClientBuilder.create().build();
-      logger.println("[ssp] Pushing notification(s) to the Slack channel.");
+      logger.println("[ssp] Pushing notification(s) to the '"+getResolvedChannel()+"' Slack channel.");
       try {
          HttpResponse res = client.execute(post);
          if (res.getStatusLine().getStatusCode() != 200) {
