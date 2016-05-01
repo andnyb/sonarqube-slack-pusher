@@ -10,15 +10,7 @@ linked to the project all the check given checks will be reported back if they '
 
 For a failed quality gate check it looks like this:
 
-**Sonar job**
-**Job:** _My project_
-**Branch:** _master_
-
-**DANGER**
-**Reason:**
-- _Coverage < 60_
-- _Skipped unit tests > 0_
-- _Other failed gate_
+![Notification example from Slack channel](https://github.com/andnyb/sonar-slack-pusher/blob/master/ssp-notification-example.png?raw=true)
 
 ### Configuration
 
