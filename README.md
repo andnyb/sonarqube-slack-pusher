@@ -18,7 +18,7 @@ For a failed quality gate check it looks like this:
 **Reason:**
 - _Coverage < 60_
 - _Skipped unit tests > 0_
-- _<another failed gate>_
+- _Other failed gate_
 
 ### Configuration
 
