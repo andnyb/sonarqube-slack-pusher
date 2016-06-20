@@ -1,7 +1,6 @@
 # sonarqube-slack-pusher
 
-[![Build Status](https://travis-ci.org/andnyb/sonar-slack-pusher.svg)](https://travis-ci.org/andnyb/sonar-slack-pusher)
-
+[![Build Status](https://travis-ci.org/andnyb/sonar-slack-pusher.svg)](https://travis-ci.org/andnyb/sonarqube-slack-pusher)
 Jenkins plugin for pushing SonarQube quality gate statuses to a given Slack channel.
 
 The plugin runs as a post build action and runs no matter the outcome of the job. The plugin makes an API request to
