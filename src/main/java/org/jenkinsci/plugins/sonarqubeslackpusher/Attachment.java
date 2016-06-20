@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.sonarslackpusher;
+package org.jenkinsci.plugins.sonarqubeslackpusher;
 
 public class Attachment {
 

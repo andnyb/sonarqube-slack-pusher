@@ -1,7 +1,7 @@
-package org.jenkinsci.plugins.sonarslackpusher.test;
+package org.jenkinsci.plugins.sonarqubeslackpusher.test;
 
-import org.jenkinsci.plugins.sonarslackpusher.Attachment;
-import org.jenkinsci.plugins.sonarslackpusher.SonarSlackPusher;
+import org.jenkinsci.plugins.sonarqubeslackpusher.Attachment;
+import org.jenkinsci.plugins.sonarqubeslackpusher.SonarQubeSlackPusher;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
@@ -12,11 +12,11 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class SonarSlackPusherTest {
+public class SonarQubeSlackPusherTest {
 
    @Test
    public void testReplaceWithParameters() throws Exception {
-      SonarSlackPusher ssp = new SonarSlackPusher("", "", "http://sonar.company.org:9000", "", "", "", "");
+      SonarQubeSlackPusher ssp = new SonarQubeSlackPusher("", "", "http://sonar.company.org:9000", "", "", "", "");
       Method replace = ssp.getClass().getDeclaredMethod("getParams", String.class);
       replace.setAccessible(true);
 
@@ -63,7 +63,7 @@ public class SonarSlackPusherTest {
 
    @Test
    public void testResolveJobNameNoParameterization() throws Exception {
-      SonarSlackPusher ssp = new SonarSlackPusher("", "http://sonar.company.org:9000", "J o b", "B r a n c h", "ac", "un", "pw");
+      SonarQubeSlackPusher ssp = new SonarQubeSlackPusher("", "http://sonar.company.org:9000", "J o b", "B r a n c h", "ac", "un", "pw");
       Method resolve = ssp.getClass().getDeclaredMethod("resolveJobName");
       resolve.setAccessible(true);
 
@@ -72,7 +72,7 @@ public class SonarSlackPusherTest {
 
    @Test
    public void testResolveJobNameBranchBlank() throws Exception {
-      SonarSlackPusher ssp = new SonarSlackPusher("", "http://sonar.company.org:9000", "J o b", "", "ac", "un", "pw");
+      SonarQubeSlackPusher ssp = new SonarQubeSlackPusher("", "http://sonar.company.org:9000", "J o b", "", "ac", "un", "pw");
       Method resolve = ssp.getClass().getDeclaredMethod("resolveJobName");
       resolve.setAccessible(true);
 
@@ -81,7 +81,7 @@ public class SonarSlackPusherTest {
 
    @Test
    public void testResolveJobNameJobParameterizedBranchEmpty() throws Exception {
-      SonarSlackPusher ssp = new SonarSlackPusher("", "http://sonar.company.org:9000", "ToBeResolved", "", "ac", "un", "pw");
+      SonarQubeSlackPusher ssp = new SonarQubeSlackPusher("", "http://sonar.company.org:9000", "ToBeResolved", "", "ac", "un", "pw");
       Method resolve = ssp.getClass().getDeclaredMethod("resolveJobName");
       resolve.setAccessible(true);
 
@@ -94,7 +94,7 @@ public class SonarSlackPusherTest {
 
    @Test
    public void testResolveJobNameJobParameterized() throws Exception {
-      SonarSlackPusher ssp = new SonarSlackPusher("", "http://sonar.company.org:9000", "ToBeResolved", "B r a n c h", "ac", "un", "pw");
+      SonarQubeSlackPusher ssp = new SonarQubeSlackPusher("", "http://sonar.company.org:9000", "ToBeResolved", "B r a n c h", "ac", "un", "pw");
       Method resolve = ssp.getClass().getDeclaredMethod("resolveJobName");
       resolve.setAccessible(true);
 
@@ -107,7 +107,7 @@ public class SonarSlackPusherTest {
 
    @Test
    public void testResolveJobNameBranchParameterized() throws Exception {
-      SonarSlackPusher ssp = new SonarSlackPusher("", "http://sonar.company.org:9000", "J o b", "ToBeResolved", "ac", "un", "pw");
+      SonarQubeSlackPusher ssp = new SonarQubeSlackPusher("", "http://sonar.company.org:9000", "J o b", "ToBeResolved", "ac", "un", "pw");
       Method resolve = ssp.getClass().getDeclaredMethod("resolveJobName");
       resolve.setAccessible(true);
 
@@ -120,7 +120,7 @@ public class SonarSlackPusherTest {
 
    @Test
    public void testResolveJobNameJobAndBranchParameterized() throws Exception {
-      SonarSlackPusher ssp = new SonarSlackPusher("", "http://sonar.company.org:9000", "ToBeResolvedJob", "ToBeResolvedBranch", "ac", "un", "pw");
+      SonarQubeSlackPusher ssp = new SonarQubeSlackPusher("", "http://sonar.company.org:9000", "ToBeResolvedJob", "ToBeResolvedBranch", "ac", "un", "pw");
       Method resolve = ssp.getClass().getDeclaredMethod("resolveJobName");
       resolve.setAccessible(true);
 
@@ -129,6 +129,7 @@ public class SonarSlackPusherTest {
       resolvedJob.set(ssp, "J o b");
       Field resolvedBranch = ssp.getClass().getDeclaredField("resolvedBranchName");
       resolvedBranch.setAccessible(true);
+      resolvedBranch.set(ssp, "B r a n c h");
       resolvedBranch.set(ssp, "B r a n c h");
 
       assertEquals("Job name and branch name", "J o b B r a n c h", resolve.invoke(ssp));

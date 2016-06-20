@@ -1,9 +1,9 @@
-package org.jenkinsci.plugins.sonarslackpusher.it;
+package org.jenkinsci.plugins.sonarqubeslackpusher.it;
 
 import static org.junit.Assert.assertTrue;
 
 import org.apache.commons.io.FileUtils;
-import org.jenkinsci.plugins.sonarslackpusher.SonarSlackPusher;
+import org.jenkinsci.plugins.sonarqubeslackpusher.SonarQubeSlackPusher;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -17,7 +17,7 @@ import java.io.PrintStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
-public class SonarSlackPusherIT {
+public class SonarQubeSlackPusherIT {
 
    @Rule
    public MockServerRule mockServerRule = new MockServerRule(this, 9999);
@@ -36,7 +36,7 @@ public class SonarSlackPusherIT {
                .withBody(body)
          );
 
-      SonarSlackPusher ssp = new SonarSlackPusher("", "http://localhost:9999", "fun-service", "", "", "bullen", "passwd");
+      SonarQubeSlackPusher ssp = new SonarQubeSlackPusher("", "http://localhost:9999", "fun-service", "", "", "bullen", "passwd");
 
       // Disable Jenkins provided logging
       Field logger = ssp.getClass().getDeclaredField("logger");

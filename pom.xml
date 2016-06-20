@@ -10,12 +10,12 @@
         <relativePath/>
     </parent>
     <groupId>org.jenkins-ci.plugins</groupId>
-    <artifactId>sonar-slack-pusher</artifactId>
-    <version>1.7</version>
+    <artifactId>sonarqube-slack-pusher</artifactId>
+    <version>1.8</version>
     <packaging>hpi</packaging>
 
-    <name>Sonar Slack Pusher</name>
-    <description>Plugin that posts Sonar results to a given Slack channel</description>
+    <name>SonarQube Slack Pusher</name>
+    <description>Plugin that posts SonarQube results to a given Slack channel</description>
     <url>https://wiki.jenkins-ci.org/display/JENKINS/TODO+Plugin</url>
     <licenses>
         <license>
