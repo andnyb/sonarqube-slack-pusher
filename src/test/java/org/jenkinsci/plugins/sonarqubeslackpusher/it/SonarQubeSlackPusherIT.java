@@ -25,7 +25,6 @@ public class SonarQubeSlackPusherIT {
    private MockServerClient mockServerClient;
 
    @Test
-   @Ignore
    public void testSonarHook() throws Exception {
       String body = FileUtils.readFileToString(new File(this.getClass().getResource("/single-project-with-failed-gates.json").getFile()));
       mockServerClient
@@ -43,7 +42,7 @@ public class SonarQubeSlackPusherIT {
       logger.setAccessible(true);
       logger.set(ssp, new PrintStream(System.out));
 
-      Method getSonarData = ssp.getClass().getDeclaredMethod("getSonarData");
+      Method getSonarData = ssp.getClass().getDeclaredMethod("getSonarQubeData");
       getSonarData.setAccessible(true);
       String s = (String)getSonarData.invoke(ssp);
       assertTrue("Looking for fun project:", s.contains("fun-service"));
