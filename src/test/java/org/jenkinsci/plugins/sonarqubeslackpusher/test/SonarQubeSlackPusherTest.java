@@ -130,9 +130,45 @@ public class SonarQubeSlackPusherTest {
       Field resolvedBranch = ssp.getClass().getDeclaredField("resolvedBranchName");
       resolvedBranch.setAccessible(true);
       resolvedBranch.set(ssp, "B r a n c h");
-      resolvedBranch.set(ssp, "B r a n c h");
 
       assertEquals("Job name and branch name", "J o b B r a n c h", resolve.invoke(ssp));
+   }
+
+
+   @Test
+   public void testUrlFormattingWithHttp() throws Exception {
+      SonarQubeSlackPusher ssp = new SonarQubeSlackPusher("", "http://sonar.company.org:9000", "ToBeResolvedJob", "ToBeResolvedBranch", "ac", "un", "pw");
+      Field sonarCubeUrl = ssp.getClass().getDeclaredField("sonarCubeUrl");
+      sonarCubeUrl.setAccessible(true);
+
+      assertEquals("Checking URL formatting.", "http://sonar.company.org:9000", sonarCubeUrl.get(ssp));
+   }
+
+   @Test
+   public void testUrlFormattingWithHttps() throws Exception {
+      SonarQubeSlackPusher ssp = new SonarQubeSlackPusher("", "https://sonar.company.org:9000", "ToBeResolvedJob", "ToBeResolvedBranch", "ac", "un", "pw");
+      Field sonarCubeUrl = ssp.getClass().getDeclaredField("sonarCubeUrl");
+      sonarCubeUrl.setAccessible(true);
+
+      assertEquals("Checking URL formatting.", "https://sonar.company.org:9000", sonarCubeUrl.get(ssp));
+   }
+
+   @Test
+   public void testUrlFormattingWithoutProtocol() throws Exception {
+      SonarQubeSlackPusher ssp = new SonarQubeSlackPusher("", "sonar.company.org:9000", "ToBeResolvedJob", "ToBeResolvedBranch", "ac", "un", "pw");
+      Field sonarCubeUrl = ssp.getClass().getDeclaredField("sonarCubeUrl");
+      sonarCubeUrl.setAccessible(true);
+
+      assertEquals("Checking URL formatting.", "http://sonar.company.org:9000", sonarCubeUrl.get(ssp));
+   }
+
+   @Test
+   public void testUrlFormattingWithoutProtocolAndTrailingSlash() throws Exception {
+      SonarQubeSlackPusher ssp = new SonarQubeSlackPusher("", "sonar.company.org:9000/", "ToBeResolvedJob", "ToBeResolvedBranch", "ac", "un", "pw");
+      Field sonarCubeUrl = ssp.getClass().getDeclaredField("sonarCubeUrl");
+      sonarCubeUrl.setAccessible(true);
+
+      assertEquals("Checking URL formatting.", "http://sonar.company.org:9000", sonarCubeUrl.get(ssp));
    }
 }
 
