@@ -127,6 +127,8 @@ public class SonarQubeSlackPusher extends Notifier {
          EnvVars env = build.getEnvironment(listener);
          env.overrideAll(build.getBuildVariables());
          ArrayList<String> params = getParams(str);
+         // TODO
+         // This part will override the last found parameter, ie ${a}${b} will only replace and return b.
          for (String param : params) {
             if (env.containsKey(param)) {
                str = env.get(param);
