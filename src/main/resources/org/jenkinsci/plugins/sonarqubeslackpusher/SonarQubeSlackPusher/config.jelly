@@ -7,10 +7,10 @@
         <f:entry title="Other channel" field="otherChannel">
             <f:textbox />
         </f:entry>
-        <f:entry title="Sonar root URL" field="sonarUrl">
+        <f:entry title="SonarQube root URL" field="sonarQubeUrl">
             <f:textbox />
         </f:entry>
-        <f:entry title="Sonar job name" field="jobName">
+        <f:entry title="SonarQube job name" field="jobName">
             <f:textbox />
         </f:entry>
         <f:entry title="Branch name" field="branchName">
