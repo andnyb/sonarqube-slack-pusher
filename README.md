@@ -4,10 +4,9 @@
 Jenkins plugin for pushing SonarQube projects quality gate status to a given Slack channel.
 
 The plugin runs as a post build action and runs no matter the outcome of the job. The plugin makes an API request to
-a SonarQube server instance to get the status for a given job. If the SonarQube job has a quality gate defined and
-linked to the project all the check given checks will be reported back if they 'fail'.
+a SonarQube server instance to get the quality status for a given SonarQube project. If the SonarQube project has a quality gate defined the plugin will report to a configured Slack channel if there are any 'failed' quality gate checks.
 
-For a failed quality gate check it would look like this:
+For a failed quality gate it would look like this:
 
 ![Notification example from Slack channel](https://github.com/andnyb/sonarqube-slack-pusher/blob/master/ssp-notification-example.png?raw=true)
 
