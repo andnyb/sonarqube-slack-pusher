@@ -67,7 +67,7 @@ public class SonarQubeSlackPusherTest {
       Method resolve = ssp.getClass().getDeclaredMethod("resolveJobName");
       resolve.setAccessible(true);
 
-      assertEquals("Job name and branch name", "J o b B r a n c h", resolve.invoke(ssp));
+      assertEquals("Job name and branch name", "J o b:B r a n c h", resolve.invoke(ssp));
    }
 
    @Test
@@ -102,7 +102,7 @@ public class SonarQubeSlackPusherTest {
       resolvedJob.setAccessible(true);
       resolvedJob.set(ssp, "J o b");
 
-      assertEquals("Job name and branch name", "J o b B r a n c h", resolve.invoke(ssp));
+      assertEquals("Job name and branch name", "J o b:B r a n c h", resolve.invoke(ssp));
    }
 
    @Test
@@ -115,7 +115,7 @@ public class SonarQubeSlackPusherTest {
       resolvedBranch.setAccessible(true);
       resolvedBranch.set(ssp, "B r a n c h");
 
-      assertEquals("Job name and branch name", "J o b B r a n c h", resolve.invoke(ssp));
+      assertEquals("Job name and branch name", "J o b:B r a n c h", resolve.invoke(ssp));
    }
 
    @Test
@@ -131,7 +131,7 @@ public class SonarQubeSlackPusherTest {
       resolvedBranch.setAccessible(true);
       resolvedBranch.set(ssp, "B r a n c h");
 
-      assertEquals("Job name and branch name", "J o b B r a n c h", resolve.invoke(ssp));
+      assertEquals("Job name and branch name", "J o b:B r a n c h", resolve.invoke(ssp));
    }
 
 

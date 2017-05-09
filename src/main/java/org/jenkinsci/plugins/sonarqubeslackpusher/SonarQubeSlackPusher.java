@@ -224,7 +224,8 @@ public class SonarQubeSlackPusher extends Notifier {
    }
 
    private String getSonarQubeData() throws Exception {
-      String path = "/api/resources?metrics=alert_status,quality_gate_details&includealerts=true";
+      // String path = "/api/resources?metrics=alert_status,quality_gate_details&includealerts=true";
+      String path = "/api/qualitygates/project_status?projectKey="+resolveJobName();;
       CloseableHttpClient client = HttpClientBuilder.create().build();
       HttpGet get = new HttpGet(sonarCubeUrl + path);
 
@@ -259,14 +260,26 @@ public class SonarQubeSlackPusher extends Notifier {
 
    private void getAllNotifications(String data) {
       JSONParser jsonParser = new JSONParser();
-      JSONArray jobs = null;
+      JSONObject responseJson = null;
       try {
-         jobs = (JSONArray)jsonParser.parse(data);
+         responseJson = (JSONObject)jsonParser.parse(data);
       } catch (ParseException pe) {
          logger.println("[ssp] Could not parse the response from SonarQube '" + data + "'");
          return;
       }
 
+      JSONObject projectStatus = (JSONObject)responseJson.get("projectStatus");
+      JSONArray conditions = (JSONArray)projectStatus.get("conditions");
+      for (Object condition : conditions) {
+         String status = (String)((JSONObject)condition).get("status");
+         if (status.equalsIgnoreCase("ERROR") || status.equalsIgnoreCase("WARN")) {
+            attachment = new Attachment();
+            attachment.setAlert(status);
+            //attachment.setAlertText();
+         }
+      }
+
+/*
       String name = resolveJobName();
       for (Object job : jobs) {
          if (((JSONObject) job).get("name").toString().equals(name)) {
@@ -286,6 +299,7 @@ public class SonarQubeSlackPusher extends Notifier {
             }
          }
       }
+*/
    }
 
    private String resolveJobName() {
@@ -294,11 +308,11 @@ public class SonarQubeSlackPusher extends Notifier {
          name = resolvedJobName;
       }
       if (resolvedBranchName != null && !resolvedBranchName.equals("")) {
-         name += " " + resolvedBranchName;
+         name += ":" + resolvedBranchName;
          name.trim();
       }
       else if (branchName != null && !branchName.equals("")) {
-         name += " " + branchName;
+         name += ":" + branchName;
          name.trim();
       }
       return name;

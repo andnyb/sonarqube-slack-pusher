@@ -1,29 +1,104 @@
-[
-  {
-    "id": 13321,
-    "key": "com.company:fun-service",
-    "uuid": "959b35ba-e8ff-4d39-866a-8627a08ad36a",
-    "name": "fun-service",
-    "scope": "PRJ",
-    "qualifier": "TRK",
-    "date": "2016-02-19T14:57:28+0000",
-    "creationDate": "2015-10-21T14:17:41+0000",
-    "lname": "fun-service",
-    "version": "0.0.5",
-    "description": "da description!",
-    "msr": [
+{
+
+  "projectStatus": {
+    "status": "ERROR",
+    "conditions": [
       {
-        "key": "alert_status",
-        "data": "ERROR",
-        "alert": "ERROR",
-        "alert_text": "Unit tests errors > 0, Unit tests failures > 0, Major issues > 0, New Major issues > 0 over 2 days (2015 Oct 21)"
+        "status": "OK",
+        "metricKey": "blocker_violations",
+        "comparator": "GT",
+        "errorThreshold": "0",
+        "actualValue": "0"
       },
       {
-        "key": "quality_gate_details",
-        "data": "{\"level\":\"ERROR\",\"conditions\":[{\"metric\":\"blocker_violations\",\"op\":\"GT\",\"error\":\"0\",\"actual\":\"0\",\"level\":\"OK\"},{\"metric\":\"test_errors\",\"op\":\"GT\",\"error\":\"0\",\"actual\":\"1\",\"level\":\"ERROR\"},{\"metric\":\"test_failures\",\"op\":\"GT\",\"error\":\"0\",\"actual\":\"1\",\"level\":\"ERROR\"},{\"metric\":\"reopened_issues\",\"op\":\"GT\",\"warning\":\"0\",\"actual\":\"0\",\"level\":\"OK\"},{\"metric\":\"skipped_tests\",\"op\":\"GT\",\"warning\":\"0\",\"actual\":\"0\",\"level\":\"OK\"},{\"metric\":\"major_violations\",\"op\":\"GT\",\"warning\":\"0\",\"error\":\"10\",\"actual\":\"8\",\"level\":\"WARN\"},{\"metric\":\"critical_violations\",\"op\":\"GT\",\"warning\":\"\",\"error\":\"0\",\"actual\":\"0\",\"level\":\"OK\"},{\"metric\":\"overall_coverage\",\"op\":\"LT\",\"warning\":\"80\",\"error\":\"50\",\"actual\":\"95.0\",\"level\":\"OK\"},{\"metric\":\"new_major_violations\",\"op\":\"GT\",\"period\":1,\"warning\":\"\",\"error\":\"0\",\"actual\":\"4\",\"level\":\"ERROR\"},{\"metric\":\"new_critical_violations\",\"op\":\"GT\",\"period\":1,\"warning\":\"\",\"error\":\"0\",\"actual\":\"0\",\"level\":\"OK\"}]}",
-        "alert": null,
-        "alert_text": null
+        "status": "ERROR",
+        "metricKey": "critical_violations",
+        "comparator": "GT",
+        "errorThreshold": "0",
+        "actualValue": "9"
+      },
+      {
+        "status": "OK",
+        "metricKey": "test_errors",
+        "comparator": "GT",
+        "errorThreshold": "0",
+        "actualValue": "0"
+      },
+      {
+        "status": "OK",
+        "metricKey": "test_failures",
+        "comparator": "GT",
+        "errorThreshold": "0",
+        "actualValue": "0"
+      },
+      {
+        "status": "OK",
+        "metricKey": "reopened_issues",
+        "comparator": "GT",
+        "warningThreshold": "0",
+        "actualValue": "0"
+      },
+      {
+        "status": "WARN",
+        "metricKey": "skipped_tests",
+        "comparator": "GT",
+        "warningThreshold": "0",
+        "actualValue": "2"
+      },
+      {
+        "status": "ERROR",
+        "metricKey": "new_major_violations",
+        "comparator": "GT",
+        "periodIndex": 1,
+        "errorThreshold": "0",
+        "actualValue": "3"
+      },
+      {
+        "status": "ERROR",
+        "metricKey": "major_violations",
+        "comparator": "GT",
+        "warningThreshold": "0",
+        "errorThreshold": "30",
+        "actualValue": "83"
+      },
+      {
+        "status": "OK",
+        "metricKey": "new_technical_debt",
+        "comparator": "GT",
+        "periodIndex": 1,
+        "warningThreshold": "60",
+        "errorThreshold": "120",
+        "actualValue": "2"
+      },
+      {
+        "status": "ERROR",
+        "metricKey": "coverage",
+        "comparator": "LT",
+        "warningThreshold": "90",
+        "errorThreshold": "60",
+        "actualValue": "45.4"
+      }
+    ],
+    "periods": [
+      {
+        "index": 1,
+        "mode": "days",
+        "date": "2016-09-21T12:03:15+0000",
+        "parameter": "2"
+      },
+      {
+        "index": 2,
+        "mode": "days",
+        "date": "2016-09-21T12:03:15+0000",
+        "parameter": "10"
+      },
+      {
+        "index": 3,
+        "mode": "days",
+        "date": "2016-09-21T12:03:15+0000",
+        "parameter": "30"
       }
     ]
   }
-]
+
+}
