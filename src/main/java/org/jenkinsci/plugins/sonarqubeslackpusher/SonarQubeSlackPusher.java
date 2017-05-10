@@ -263,43 +263,29 @@ public class SonarQubeSlackPusher extends Notifier {
       JSONObject responseJson = null;
       try {
          responseJson = (JSONObject)jsonParser.parse(data);
+
+         JSONObject projectStatus = (JSONObject)responseJson.get("projectStatus");
+         JSONArray conditions = (JSONArray)projectStatus.get("conditions");
+         for (Object condition : conditions) {
+            String status = (String)((JSONObject)condition).get("status");
+            if (status.equalsIgnoreCase("ERROR") || status.equalsIgnoreCase("WARN")) {
+               attachment = new Attachment();
+               attachment.setAlert(status);
+               if (((JSONObject) condition).containsKey("periodIndex")) {
+                  int index = Integer.parseInt(((JSONObject)condition).get("periodIndex").toString());
+                  JSONArray periods = (JSONArray)projectStatus.get("periods");
+                  JSONObject period = (JSONObject)periods.get(index);
+                  attachment.setAlertText(QualityGateTranslator.getInstance().translate((JSONObject) condition, period));
+               } else {
+                  attachment.setAlertText(QualityGateTranslator.getInstance().translate((JSONObject) condition));
+               }
+            }
+         }
       } catch (ParseException pe) {
          logger.println("[ssp] Could not parse the response from SonarQube '" + data + "'");
          return;
       }
-
-      JSONObject projectStatus = (JSONObject)responseJson.get("projectStatus");
-      JSONArray conditions = (JSONArray)projectStatus.get("conditions");
-      for (Object condition : conditions) {
-         String status = (String)((JSONObject)condition).get("status");
-         if (status.equalsIgnoreCase("ERROR") || status.equalsIgnoreCase("WARN")) {
-            attachment = new Attachment();
-            attachment.setAlert(status);
-            //attachment.setAlertText();
-         }
-      }
-
-/*
-      String name = resolveJobName();
-      for (Object job : jobs) {
-         if (((JSONObject) job).get("name").toString().equals(name)) {
-            id = ((JSONObject) job).get("id").toString();
-            JSONArray msrs = (JSONArray) ((JSONObject) job).get("msr");
-            for (Object msr : msrs) {
-               if (((JSONObject) msr).get("key").equals("alert_status")) {
-                  if (((JSONObject) msr).get("alert") != null) {
-                     String alert = ((JSONObject) msr).get("alert").toString();
-                     if (alert.equalsIgnoreCase("ERROR") || alert.equalsIgnoreCase("WARN")) {
-                        attachment = new Attachment();
-                        attachment.setAlert(alert);
-                        attachment.setAlertText(((JSONObject) msr).get("alert_text").toString());
-                     }
-                  }
-               }
-            }
-         }
-      }
-*/
+      logger.println("[ssp] PARSED '" + attachment + "'");
    }
 
    private String resolveJobName() {

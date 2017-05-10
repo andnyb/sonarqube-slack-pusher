@@ -1,0 +1,7 @@
+{
+  "status": "WARN",
+  "metricKey": "skipped_tests",
+  "comparator": "GT",
+  "warningThreshold": "0",
+  "actualValue": "2"
+}
