@@ -265,19 +265,23 @@ public class SonarQubeSlackPusher extends Notifier {
          responseJson = (JSONObject)jsonParser.parse(data);
 
          JSONObject projectStatus = (JSONObject)responseJson.get("projectStatus");
+         String status = (String)((JSONObject)projectStatus).get("status");
+         if (status.equalsIgnoreCase("ERROR") || status.equalsIgnoreCase("WARN")) {
+            attachment = new Attachment();
+            attachment.setAlert(status);
+         }
+
          JSONArray conditions = (JSONArray)projectStatus.get("conditions");
          for (Object condition : conditions) {
-            String status = (String)((JSONObject)condition).get("status");
-            if (status.equalsIgnoreCase("ERROR") || status.equalsIgnoreCase("WARN")) {
-               attachment = new Attachment();
-               attachment.setAlert(status);
+            String conditionStatus = (String)((JSONObject)condition).get("status");
+            if (conditionStatus.equalsIgnoreCase("ERROR") || conditionStatus.equalsIgnoreCase("WARN")) {
                if (((JSONObject) condition).containsKey("periodIndex")) {
-                  int index = Integer.parseInt(((JSONObject)condition).get("periodIndex").toString());
-                  JSONArray periods = (JSONArray)projectStatus.get("periods");
-                  JSONObject period = (JSONObject)periods.get(index);
-                  attachment.setAlertText(QualityGateTranslator.getInstance().translate((JSONObject) condition, period));
+                  int index = Integer.parseInt(((JSONObject) condition).get("periodIndex").toString());
+                  JSONArray periods = (JSONArray) projectStatus.get("periods");
+                  JSONObject period = (JSONObject) periods.get(index);
+                  attachment.addAlertText(QualityGateTranslator.getInstance().translate((JSONObject) condition, period));
                } else {
-                  attachment.setAlertText(QualityGateTranslator.getInstance().translate((JSONObject) condition));
+                  attachment.addAlertText(QualityGateTranslator.getInstance().translate((JSONObject) condition));
                }
             }
          }
@@ -285,7 +289,6 @@ public class SonarQubeSlackPusher extends Notifier {
          logger.println("[ssp] Could not parse the response from SonarQube '" + data + "'");
          return;
       }
-      logger.println("[ssp] PARSED '" + attachment + "'");
    }
 
    private String resolveJobName() {
@@ -322,9 +325,10 @@ public class SonarQubeSlackPusher extends Notifier {
       }
       String linkUrl = null;
       try {
-         linkUrl = new URI(sonarCubeUrl + "/dashboard/index/" + id).normalize().toString();
+         linkUrl = new URI(sonarCubeUrl + "/dashboard/index/" +resolveJobName()).normalize().toString();
       } catch (URISyntaxException use) {
-         logger.println("[ssp] Could not create link to SonarQube job with the following content'" + sonarCubeUrl + "/dashboard/index/" + id + "'");
+         logger.println("[ssp] Could not create link to SonarQube job with the following content'" + sonarCubeUrl + "/dashboard/index/" + resolveJobName() +
+            "'");
       }
       String message = "{";
       if (resolvedChannel != null) {

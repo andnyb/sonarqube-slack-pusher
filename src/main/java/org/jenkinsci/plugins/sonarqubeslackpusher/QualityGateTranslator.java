@@ -39,14 +39,12 @@ public class QualityGateTranslator {
       String alertText = "";
       alertText += condition.get("metricKey");
       alertText += " '"+condition.get("actualValue")+"' ";
-      alertText += "are ";
-      alertText += (condition.get("comparator")).equals("GT") ? "more than " : "less than ";
-      alertText += "the threshold of '";
+      alertText += (condition.get("comparator")).equals("GT") ? "> " : "< ";
 
       if (condition.get("status").equals("ERROR")) {
-         alertText += condition.get("errorThreshold") + "'";
+         alertText += "'" + condition.get("errorThreshold") + "'";
       } else {
-         alertText += condition.get("warningThreshold") + "'";
+         alertText += "'" + condition.get("warningThreshold") + "'";
       }
       return alertText;
    }

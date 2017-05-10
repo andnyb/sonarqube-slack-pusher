@@ -54,14 +54,6 @@ public class SonarQubeSlackPusherTest {
    }
 
    @Test
-   public void testSplitUpOfAlerts() {
-      Attachment a = new Attachment();
-      a.setAlertText("Unit tests errors > 0, Unit tests failures > 0, Skipped unit tests > 0, Major issues > 10, Critical issues > 0, Overall coverage < 50");
-      assertTrue("We expect the alerts to be splitted up", a.getAttachment().contains("- Unit tests errors > 0"));
-      assertTrue("We expect the alerts to be splitted up", a.getAttachment().contains("- Skipped unit tests > 0"));
-   }
-
-   @Test
    public void testResolveJobNameNoParameterization() throws Exception {
       SonarQubeSlackPusher ssp = new SonarQubeSlackPusher("", "http://sonar.company.org:9000", "J o b", "B r a n c h", "ac", "un", "pw");
       Method resolve = ssp.getClass().getDeclaredMethod("resolveJobName");

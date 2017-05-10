@@ -40,16 +40,16 @@ public class QualityGateTranslatorTest {
 
    @Test
    public void nonTimedErrorAlert() {
-      assertThat(qgt.translate(errorCondition), is("critical_violations '9' are more than the threshold of '0'"));
+      assertThat(qgt.translate(errorCondition), is("critical_violations '9' > '0'"));
    }
 
    @Test
    public void nonTimedWarnAlert() {
-      assertThat(qgt.translate(warnCondition), is("skipped_tests '2' are more than the threshold of '0'"));
+      assertThat(qgt.translate(warnCondition), is("skipped_tests '2' < '0'"));
    }
 
    @Test
    public void timedErrorAlert() {
-      assertThat(qgt.translate(sinceTimeCondition, timePeriod), is("new_major_violations '3' are more than the threshold of '0' over '10' days"));
+      assertThat(qgt.translate(sinceTimeCondition, timePeriod), is("new_major_violations '3' > '0' over '10' days"));
    }
 }
