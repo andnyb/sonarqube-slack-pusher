@@ -278,7 +278,7 @@ public class SonarQubeSlackPusher extends Notifier {
                if (((JSONObject) condition).containsKey("periodIndex")) {
                   int index = Integer.parseInt(((JSONObject) condition).get("periodIndex").toString());
                   JSONArray periods = (JSONArray) projectStatus.get("periods");
-                  JSONObject period = (JSONObject) periods.get(index);
+                  JSONObject period = (JSONObject) periods.get(index-1);
                   attachment.addAlertText(QualityGateTranslator.getInstance().translate((JSONObject) condition, period));
                } else {
                   attachment.addAlertText(QualityGateTranslator.getInstance().translate((JSONObject) condition));
