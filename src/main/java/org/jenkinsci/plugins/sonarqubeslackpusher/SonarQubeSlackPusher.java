@@ -2,15 +2,15 @@ package org.jenkinsci.plugins.sonarqubeslackpusher;
 
 import hudson.EnvVars;
 import hudson.Extension;
+import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.BuildListener;
+import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import hudson.util.FormValidation;
+import jenkins.tasks.SimpleBuildStep;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -30,6 +30,7 @@ import org.json.simple.parser.ParseException;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
+import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -39,7 +40,7 @@ import java.net.URL;
 import java.util.ArrayList;
 
 
-public class SonarQubeSlackPusher extends Notifier {
+public class SonarQubeSlackPusher extends Notifier implements SimpleBuildStep {
 
    private String hook;
    private String sonarCubeUrl;
@@ -160,6 +161,21 @@ public class SonarQubeSlackPusher extends Notifier {
          }
       }
       return params;
+   }
+
+   @Override
+   public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath filePath, @Nonnull Launcher launcher,
+                       @Nonnull TaskListener listener) throws InterruptedException, IOException {
+      attachment = null;
+      logger = listener.getLogger();
+      resolvedJobName = jobName; //parameterReplacement(jobName, build, listener);
+      resolvedBranchName = branchName; //parameterReplacement(branchName, build, listener);
+      resolvedChannel = otherChannel; //parameterReplacement(otherChannel, build, listener);
+      try {
+         getAllNotifications(getSonarQubeData());
+      } catch (Exception e) {
+      }
+      pushNotification();
    }
 
    @Extension
