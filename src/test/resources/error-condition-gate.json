@@ -1,0 +1,7 @@
+{
+  "status": "ERROR",
+  "metricKey": "critical_violations",
+  "comparator": "GT",
+  "errorThreshold": "0",
+  "actualValue": "9"
+}

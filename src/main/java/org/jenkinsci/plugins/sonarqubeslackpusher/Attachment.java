@@ -18,8 +18,11 @@ public class Attachment {
       this.color = alert.equalsIgnoreCase("ERROR") ? "danger" : "warning";
    }
 
-   public void setAlertText(String alertText) {
-      String alerts = alertText.replaceAll(",", "\\\\n-");
-      this.alertText = "- " + alerts;
+   public void addAlertText(String alertText) {
+      if (this.alertText==null) {
+         this.alertText = "- "+alertText;
+      } else {
+         this.alertText += "\n- "+alertText;
+      }
    }
 }
