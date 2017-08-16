@@ -28,7 +28,7 @@ public class SonarQubeSlackPusherIT {
    public void testSonarHook() throws Exception {
       String body = FileUtils.readFileToString(new File(this.getClass().getResource("/single-project-with-failed-gates.json").getFile()));
       mockServerClient
-         .when(HttpRequest.request("/api/resources"))
+         .when(HttpRequest.request("/api/qualitygates/project_status"))
          .respond(
             HttpResponse.response("")
                .withStatusCode(200)
@@ -45,7 +45,38 @@ public class SonarQubeSlackPusherIT {
       Method getSonarData = ssp.getClass().getDeclaredMethod("getSonarQubeData");
       getSonarData.setAccessible(true);
       String s = (String)getSonarData.invoke(ssp);
-      assertTrue("Looking for fun project:", s.contains("fun-service"));
+
+      // Part 2
+      Method getAllNotifications = ssp.getClass().getDeclaredMethod("getAllNotifications", String.class);
+      getAllNotifications.setAccessible(true);
+      getAllNotifications.invoke(ssp, s);
+
+      Field attachment = ssp.getClass().getDeclaredField("attachment");
+      attachment.setAccessible(true);
+      assertTrue("Checking the attachment", attachment.get(ssp)!=null);
+   }
+
+   @Test
+   public void testSonarHook_example_2() throws Exception {
+      String body = FileUtils.readFileToString(new File(this.getClass().getResource("/single-project-example-2.json").getFile()));
+      mockServerClient
+         .when(HttpRequest.request("/api/qualitygates/project_status"))
+         .respond(
+            HttpResponse.response("")
+               .withStatusCode(200)
+               .withBody(body)
+         );
+
+      SonarQubeSlackPusher ssp = new SonarQubeSlackPusher("", "http://localhost:9999", "fun-service", "", "", "bullen", "passwd");
+
+      // Disable Jenkins provided logging
+      Field logger = ssp.getClass().getDeclaredField("logger");
+      logger.setAccessible(true);
+      logger.set(ssp, new PrintStream(System.out));
+
+      Method getSonarData = ssp.getClass().getDeclaredMethod("getSonarQubeData");
+      getSonarData.setAccessible(true);
+      String s = (String)getSonarData.invoke(ssp);
 
       // Part 2
       Method getAllNotifications = ssp.getClass().getDeclaredMethod("getAllNotifications", String.class);

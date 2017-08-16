@@ -224,7 +224,8 @@ public class SonarQubeSlackPusher extends Notifier {
    }
 
    private String getSonarQubeData() throws Exception {
-      String path = "/api/resources?metrics=alert_status,quality_gate_details&includealerts=true";
+      // String path = "/api/resources?metrics=alert_status,quality_gate_details&includealerts=true";
+      String path = "/api/qualitygates/project_status?projectKey="+resolveJobName();;
       CloseableHttpClient client = HttpClientBuilder.create().build();
       HttpGet get = new HttpGet(sonarCubeUrl + path);
 
@@ -259,32 +260,34 @@ public class SonarQubeSlackPusher extends Notifier {
 
    private void getAllNotifications(String data) {
       JSONParser jsonParser = new JSONParser();
-      JSONArray jobs = null;
+      JSONObject responseJson = null;
       try {
-         jobs = (JSONArray)jsonParser.parse(data);
-      } catch (ParseException pe) {
-         logger.println("[ssp] Could not parse the response from SonarQube '" + data + "'");
-         return;
-      }
+         responseJson = (JSONObject)jsonParser.parse(data);
 
-      String name = resolveJobName();
-      for (Object job : jobs) {
-         if (((JSONObject) job).get("name").toString().equals(name)) {
-            id = ((JSONObject) job).get("id").toString();
-            JSONArray msrs = (JSONArray) ((JSONObject) job).get("msr");
-            for (Object msr : msrs) {
-               if (((JSONObject) msr).get("key").equals("alert_status")) {
-                  if (((JSONObject) msr).get("alert") != null) {
-                     String alert = ((JSONObject) msr).get("alert").toString();
-                     if (alert.equalsIgnoreCase("ERROR") || alert.equalsIgnoreCase("WARN")) {
-                        attachment = new Attachment();
-                        attachment.setAlert(alert);
-                        attachment.setAlertText(((JSONObject) msr).get("alert_text").toString());
-                     }
-                  }
+         JSONObject projectStatus = (JSONObject)responseJson.get("projectStatus");
+         String status = (String)((JSONObject)projectStatus).get("status");
+         if (status.equalsIgnoreCase("ERROR") || status.equalsIgnoreCase("WARN")) {
+            attachment = new Attachment();
+            attachment.setAlert(status);
+         }
+
+         JSONArray conditions = (JSONArray)projectStatus.get("conditions");
+         for (Object condition : conditions) {
+            String conditionStatus = (String)((JSONObject)condition).get("status");
+            if (conditionStatus.equalsIgnoreCase("ERROR") || conditionStatus.equalsIgnoreCase("WARN")) {
+               if (((JSONObject) condition).containsKey("periodIndex")) {
+                  int index = Integer.parseInt(((JSONObject) condition).get("periodIndex").toString());
+                  JSONArray periods = (JSONArray) projectStatus.get("periods");
+                  JSONObject period = (JSONObject) periods.get(index-1);
+                  attachment.addAlertText(QualityGateTranslator.getInstance().translate((JSONObject) condition, period));
+               } else {
+                  attachment.addAlertText(QualityGateTranslator.getInstance().translate((JSONObject) condition));
                }
             }
          }
+      } catch (ParseException pe) {
+         logger.println("[ssp] Could not parse the response from SonarQube '" + data + "'");
+         return;
       }
    }
 
@@ -294,11 +297,11 @@ public class SonarQubeSlackPusher extends Notifier {
          name = resolvedJobName;
       }
       if (resolvedBranchName != null && !resolvedBranchName.equals("")) {
-         name += " " + resolvedBranchName;
+         name += ":" + resolvedBranchName;
          name.trim();
       }
       else if (branchName != null && !branchName.equals("")) {
-         name += " " + branchName;
+         name += ":" + branchName;
          name.trim();
       }
       return name;
@@ -322,9 +325,10 @@ public class SonarQubeSlackPusher extends Notifier {
       }
       String linkUrl = null;
       try {
-         linkUrl = new URI(sonarCubeUrl + "/dashboard/index/" + id).normalize().toString();
+         linkUrl = new URI(sonarCubeUrl + "/dashboard/index/" +resolveJobName()).normalize().toString();
       } catch (URISyntaxException use) {
-         logger.println("[ssp] Could not create link to SonarQube job with the following content'" + sonarCubeUrl + "/dashboard/index/" + id + "'");
+         logger.println("[ssp] Could not create link to SonarQube job with the following content'" + sonarCubeUrl + "/dashboard/index/" + resolveJobName() +
+            "'");
       }
       String message = "{";
       if (resolvedChannel != null) {

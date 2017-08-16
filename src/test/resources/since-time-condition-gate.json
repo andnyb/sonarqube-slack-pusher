@@ -1,0 +1,8 @@
+{
+  "status": "ERROR",
+  "metricKey": "new_major_violations",
+  "comparator": "GT",
+  "periodIndex": 2,
+  "errorThreshold": "0",
+  "actualValue": "3"
+}
