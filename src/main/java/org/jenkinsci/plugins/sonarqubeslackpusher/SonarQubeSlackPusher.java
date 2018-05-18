@@ -4,14 +4,17 @@ import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
+import hudson.ProxyConfiguration;
 import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import hudson.util.FormValidation;
+import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
 import org.apache.commons.codec.binary.Base64;
+import java.net.HttpURLConnection;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -32,8 +35,11 @@ import org.kohsuke.stapler.QueryParameter;
 
 import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.MalformedURLException;
+import java.net.Proxy;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -367,19 +373,49 @@ public class SonarQubeSlackPusher extends Notifier implements SimpleBuildStep {
       if (message == null) {
          return;
       }
-      HttpPost post = new HttpPost(hook);
-      HttpEntity entity = new StringEntity(message, "UTF-8");
-      post.addHeader("Content-Type", "application/json");
-      post.setEntity(entity);
-      HttpClient client = HttpClientBuilder.create().build();
-      logger.println("[ssp] Pushing notification(s) to the '"+getResolvedChannel()+"' Slack channel.");
+
+      HttpURLConnection conn = null;
       try {
-         HttpResponse res = client.execute(post);
-         if (res.getStatusLine().getStatusCode() != 200) {
+         conn = getHttpURLConnection(new URL(hook));
+         conn.setRequestMethod("POST");
+         conn.setRequestProperty("Content-Type", "application/json");
+
+         conn.setDoOutput(true);
+         DataOutputStream wr = new DataOutputStream(conn.getOutputStream());
+         wr.writeBytes(message);
+         logger.println("[ssp] Pushing notification(s) to the '"+getResolvedChannel()+"' Slack channel.");
+         wr.flush();
+         wr.close();
+
+         if (conn.getResponseCode() != 200) {
             logger.println("[ssp] Could not push to Slack... got a non 200 response. Post body: '" + message + "'");
          }
+      } catch (MalformedURLException mue) {
+         logger.println("[ssp] Could not push to slack... the URL is malformed: '" + mue.getMessage() + "'");
       } catch (IOException ioe) {
-         logger.println("[ssp] Could not push to slack... got an exception: '" + ioe.getMessage() + "'");
+         logger.println("[ssp] Could not push to slack... got an IO Exception @ '"+conn.toString()+"' : '"
+            + ioe.getMessage() + "'");
       }
+   }
+
+   private HttpURLConnection getHttpURLConnection(final URL url) throws IOException {
+      HttpURLConnection conn = null;
+      ProxyConfiguration proxyConfig = Jenkins.getInstance().proxy;
+
+      if (proxyConfig != null) {
+         Proxy proxy = proxyConfig.createProxy(url.getHost());
+         if (proxy != null && proxy.type() == Proxy.Type.HTTP) {
+            logger.println("[ssp] Attempting to use the Jenkins proxy configuration. Details: "+proxy.toString());
+            conn = (HttpURLConnection) url.openConnection(proxy);
+            if (conn == null) {
+               logger.println("[ssp] Failed to use the Jenkins proxy configuration.");
+            }
+         }
+      }
+
+      if (conn == null) {
+         conn = (HttpURLConnection) url.openConnection();
+      }
+      return conn;
    }
 }
